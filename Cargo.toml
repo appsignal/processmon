@@ -1,0 +1,8 @@
+[package]
+name = "processmon"
+version = "0.1.0"
+authors = ["Thijs Cadier <thijs@appsignal.com>"]
+edition = "2018"
+
+[dependencies]
+notify = "^4.0"
