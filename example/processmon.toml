@@ -1,0 +1,3 @@
+command = "example/process.sh"
+
+paths_to_watch = ["example"]
