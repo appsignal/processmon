@@ -3,7 +3,7 @@ extern crate toml;
 
 use std::env;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command,Child};
 use std::sync::mpsc::channel;
 use std::time::Duration;
 
@@ -35,11 +35,13 @@ fn main() {
         watcher.watch(path, RecursiveMode::Recursive).unwrap();
     }
 
-    let mut handle = match Command::new(config.command.clone()).spawn() {
-        Ok(h) => h,
-        Err(e) => panic!("Error launching command: {:?}", e)
-    };
+    // Create command
+    let mut command = Command::new(config.command.clone());
 
+    // Spawn it
+    let mut handle = spawn_command(&mut command);
+
+    // Listen to filesystem events
     loop {
         match rx.recv() {
            Ok(event) => match event {
@@ -50,14 +52,18 @@ fn main() {
                    DebouncedEvent::Rename(_, _) => {
                    println!("Got event: {:?}", event);
                    handle.kill().unwrap();
-                   handle = match Command::new(config.command.clone()).spawn() {
-                       Ok(h) => h,
-                       Err(e) => panic!("Error launching command: {:?}", e)
-                   };
+                   handle = spawn_command(&mut command);
                },
                _ => ()
            },
            Err(e) => println!("Watch error: {:?}", e),
         }
+    }
+}
+
+fn spawn_command(command: &mut Command) -> Child {
+    match command.spawn() {
+        Ok(child) => child,
+        Err(e) => panic!("Error launching command: {:?}", e)
     }
 }
