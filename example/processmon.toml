@@ -1,5 +1,5 @@
-command = "example/command.sh"
+command = "./command.sh"
 
-paths_to_watch = ["example"]
+paths_to_watch = ["code"]
 
-triggers = ["example/trigger.sh"]
+triggers = ["./trigger.sh"]

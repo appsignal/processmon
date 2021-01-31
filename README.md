@@ -1,25 +1,30 @@
 # Processmon
 
-Simple process monitor that can run and restart a process
-if files are modified. To try it out:
+Process monitor that can run trigger scripts and subsequently
+restarts the process when files on specified paths are modified.
+This can be very useful when running a development environment in
+a Docker container.
+
+To try it out:
 
 ```
 cargo build
-target/debug/processmon example/processmon.toml
+cd example
+../target/debug/processmon processmon.toml
 ```
 
-Then save a file in the example directory to trigger a restart.
+Then save a file in the `code` directory to trigger a restart.
 
 ## Configuration
 
 Processmon is configured by a toml file:
 
 ```
-command = "command.sh"
+command = "./command.sh"
 
-paths_to_watch = ["project1", "project2"]
+paths_to_watch = ["code", "dependency_code"]
 
-triggers = ["trigger.sh"]
+triggers = ["./trigger.sh"]
 ```
 
 `command` sets the command to run. Place one or more paths to watch
