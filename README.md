@@ -23,5 +23,5 @@ triggers = ["trigger.sh"]
 ```
 
 `command` sets the command to run. Place one or more paths to watch
-in `paths_to_watch`. `triggers` sets a list of commands that will be ran
+in `paths_to_watch`. `triggers` sets a list of commands that will run
 before every restart of the main command.
