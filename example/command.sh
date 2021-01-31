@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "Starting process $$"
+echo "Run command $$"
 
 while [ : ]
 do

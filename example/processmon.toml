@@ -1,3 +1,5 @@
-command = "example/process.sh"
+command = "example/command.sh"
 
 paths_to_watch = ["example"]
+
+triggers = ["example/trigger.sh"]

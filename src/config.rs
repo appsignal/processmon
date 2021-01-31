@@ -10,7 +10,8 @@ use crate::Result;
 #[derive(Debug,Clone,Deserialize)]
 pub struct Config {
     pub command: String,
-    pub paths_to_watch: Vec<String>
+    pub paths_to_watch: Vec<String>,
+    pub triggers: Option<Vec<String>>
 }
 
 impl Config {
