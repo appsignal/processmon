@@ -2,6 +2,9 @@
 name = "processmon"
 version = "0.1.0"
 authors = ["Thijs Cadier <thijs@appsignal.com>"]
+license = "MIT"
+description = "Process monitor that can run trigger scripts and subsequently restarts the process when files on specified paths are modified."
+homepage = "https://github.com/appsignal/processmon"
 edition = "2018"
 
 [dependencies]
