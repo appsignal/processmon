@@ -15,6 +15,14 @@ cd example
 
 Then save a file in the `code` directory to trigger a restart.
 
+## Installation
+
+Make sure you have a recent version of Rust installed, then run:
+
+```
+cargo install processmon
+```
+
 ## Configuration
 
 Processmon is configured by a toml file:
