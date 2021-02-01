@@ -80,7 +80,7 @@ impl Monitor {
                     println!("Running trigger '{}'", trigger);
                     let mut command = Command::new(trigger);
                     command.env("TRIGGER_PATH", path.to_string_lossy().to_string());
-                    command.spawn()?.wait()?;
+                    command.status()?;
                 }
             },
             None => ()
