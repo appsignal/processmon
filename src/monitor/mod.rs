@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::process::{Command,Child};
 use std::sync::mpsc::Receiver;
 use std::time::{Duration,SystemTime};
@@ -47,7 +48,7 @@ impl Monitor {
             if restart {
                 println!("Restarting '{}'", self.config.command);
                 self.kill()?;
-                self.run_triggers()?;
+                self.run_triggers(event.path.as_path())?;
                 self.spawn()?;
                 self.last_restart_at = Some(SystemTime::now());
             }
@@ -72,12 +73,13 @@ impl Monitor {
         Ok(())
     }
 
-    fn run_triggers(&self) -> Result<()> {
+    fn run_triggers(&self, path: &Path) -> Result<()> {
         match self.config.triggers {
             Some(ref triggers) => {
                 for trigger in triggers.iter() {
                     println!("Running trigger '{}'", trigger);
                     let mut command = Command::new(trigger);
+                    command.env("TRIGGER_PATH", path.to_string_lossy().to_string());
                     command.spawn()?.wait()?;
                 }
             },

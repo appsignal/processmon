@@ -37,4 +37,6 @@ triggers = ["./trigger.sh"]
 
 `command` sets the command to run. Place one or more paths to watch
 in `paths_to_watch`. `triggers` sets a list of commands that will run
-before every restart of the main command.
+before every restart of the main command. When running a trigger the env
+var `TRIGGER_PATH` will be filled with the path that triggered the
+restart.
