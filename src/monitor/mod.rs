@@ -56,7 +56,10 @@ impl Monitor {
 
     fn kill(&mut self) -> Result<()> {
         match self.process {
-            Some(ref mut p) => p.kill()?,
+            Some(ref mut process) => {
+                process.kill()?;
+                process.wait()?;
+            },
             None => ()
         }
         self.process = None;
