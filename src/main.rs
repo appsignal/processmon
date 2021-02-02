@@ -14,6 +14,8 @@ mod monitor;
 
 use anyhow::Result;
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 
@@ -38,7 +40,7 @@ fn main() {
         }
     };
 
-    println!("Starting processmon in {}: {:?}", current_dir, config);
+    println!("Starting processmon {} in {}: {:?}", VERSION, current_dir, config);
 
     // Verify all specified paths are present
     verify_path_present(&config.command, "command");
