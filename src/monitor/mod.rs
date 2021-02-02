@@ -13,7 +13,7 @@ use event_proxy::ChangeEvent;
 pub struct Monitor {
     pub config: Config,
     pub receiver: Receiver<ChangeEvent>,
-    pub process: Option<Child>,
+    pub running_processes: Vec<Child>,
     pub last_restart_at: Option<SystemTime>
 }
 
@@ -22,14 +22,14 @@ impl Monitor {
         Self {
             config: config,
             receiver: receiver,
-            process: None,
+            running_processes: Vec::new(),
             last_restart_at: None
         }
     }
 
     pub fn run(&mut self) -> Result<()> {
         // Spawn the process
-        self.spawn()?;
+        self.spawn_processes()?;
 
         // Listen for change events
         loop {
@@ -46,39 +46,50 @@ impl Monitor {
             };
 
             if restart {
-                println!("Restarting '{}'", self.config.command);
-                self.kill()?;
+                println!("Restarting");
+                self.kill_running_processes()?;
                 self.run_triggers(event.path.as_path())?;
-                self.spawn()?;
+                self.spawn_processes()?;
                 self.last_restart_at = Some(SystemTime::now());
             }
         }
     }
 
-    fn kill(&mut self) -> Result<()> {
-        match self.process {
-            Some(ref mut process) => {
-                process.kill()?;
-                process.wait()?;
-            },
-            None => ()
+    fn kill_running_processes(&mut self) -> Result<()> {
+        for mut child in self.running_processes.drain(0..) {
+            child.kill()?;
+            child.wait()?;
         }
-        self.process = None;
         Ok(())
     }
 
-    fn spawn(&mut self) -> Result<()> {
-        let mut command = Command::new(&self.config.command);
-        self.process = Some(command.spawn()?);
+    fn spawn_processes(&mut self) -> Result<()> {
+        for (name, process) in self.config.processes.iter() {
+            println!("Starting process {} '{}'", name, process);
+            let mut command = Command::new(&process.command);
+            match process.args {
+                Some(ref args) => {
+                    command.args(args);
+                },
+                None => ()
+            }
+            self.running_processes.push(command.spawn()?);
+        }
         Ok(())
     }
 
     fn run_triggers(&self, path: &Path) -> Result<()> {
         match self.config.triggers {
             Some(ref triggers) => {
-                for trigger in triggers.iter() {
-                    println!("Running trigger '{}'", trigger);
-                    let mut command = Command::new(trigger);
+                for (name, trigger) in triggers.iter() {
+                    println!("Running trigger {} '{}'", name, trigger);
+                    let mut command = Command::new(&trigger.command);
+                    match trigger.args {
+                        Some(ref args) => {
+                            command.args(args);
+                        },
+                        None => ()
+                    }
                     command.env("TRIGGER_PATH", path.to_string_lossy().to_string());
                     command.status()?;
                 }

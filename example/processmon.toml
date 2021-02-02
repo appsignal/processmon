@@ -1,5 +1,16 @@
-command = "./command.sh"
-
 paths_to_watch = ["code"]
 
-triggers = ["./trigger.sh"]
+[processes]
+
+[processes.process1]
+command = "sh"
+args = ["process1.sh"]
+
+[processes.process2]
+command = "./process2.sh"
+
+[triggers]
+
+[triggers.trigger]
+command = "sh"
+args = ["trigger.sh"]

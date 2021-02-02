@@ -19,11 +19,6 @@ const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let current_dir = match env::current_dir() {
-        Ok(d) => d.to_string_lossy().to_string(),
-        Err(_) => "unknown".to_string()
-    };
-
     // Load config
     let config_file_path = match args.get(1) {
         Some(p) => p.to_owned(),
@@ -40,21 +35,7 @@ fn main() {
         }
     };
 
-    println!("Starting processmon {} in {}: {:?}", VERSION, current_dir, config);
-
-    // Verify all specified paths are present
-    verify_path_present(&config.command, "command");
-    match config.triggers {
-        Some(ref triggers) => {
-            for path in triggers.iter() {
-                verify_path_present(&path, "trigger");
-            }
-        },
-        None => ()
-    }
-    for path in config.paths_to_watch.iter() {
-        verify_path_present(&path, "path to watch");
-    }
+    println!("Starting processmon {}", VERSION);
 
     // Start watching paths
     let (watcher_sender, watcher_receiver) = channel();
@@ -75,16 +56,5 @@ fn main() {
     match monitor.run() {
         Ok(_) => (),
         Err(e) => panic!("Error running monitor: {:?}", e)
-    }
-}
-
-fn verify_path_present(path: &str, name: &str) {
-    if !Path::new(path).exists() {
-        println!(
-            "Path '{}' for {} not present",
-            path,
-            name
-        );
-        exit(1);
     }
 }
