@@ -1,9 +1,9 @@
 #!/bin/sh
 
-echo "Run second command $$"
+echo "Run process2 $$"
 
 while [ : ]
 do
-  echo "Tick second $$"
+  echo "Tick process2 $$"
   sleep 1
 done

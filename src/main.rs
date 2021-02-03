@@ -7,7 +7,8 @@ use std::process::exit;
 use std::sync::mpsc::channel;
 use std::time::Duration;
 
-use notify::{Watcher, RecursiveMode, watcher};
+use colored::Colorize;
+use notify::{Watcher,RecursiveMode,watcher};
 
 mod config;
 mod monitor;
@@ -35,7 +36,11 @@ fn main() {
         }
     };
 
-    println!("Starting processmon {}", VERSION);
+    println!(
+        "Starting {} {}",
+        "processmon".bold(),
+        VERSION
+    );
 
     // Start watching paths
     let (watcher_sender, watcher_receiver) = channel();

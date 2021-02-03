@@ -1,14 +1,19 @@
+use std::io::{BufRead,BufReader};
 use std::path::Path;
-use std::process::{Command,Child};
+use std::process::{Command,Child,Stdio};
 use std::sync::mpsc::Receiver;
+use std::thread;
 use std::time::{Duration,SystemTime};
 
-use crate::config::Config;
+use colored::*;
 
+use crate::config::Config;
 use crate::Result;
 
 pub mod event_proxy;
 use event_proxy::ChangeEvent;
+
+const COLORS: &[&str] = &["bright green", "bright blue", "yellow", "magenta", "bright cyan"];
 
 pub struct Monitor {
     pub config: Config,
@@ -64,16 +69,51 @@ impl Monitor {
     }
 
     fn spawn_processes(&mut self) -> Result<()> {
+        let mut color_i = 0;
         for (name, process) in self.config.processes.iter() {
             println!("Starting process {} '{}'", name, process);
+
+            // Create command
             let mut command = Command::new(&process.command);
+            command.stderr(Stdio::piped());
+            command.stdout(Stdio::piped());
             match process.args {
                 Some(ref args) => {
                     command.args(args);
                 },
                 None => ()
             }
-            self.running_processes.push(command.spawn()?);
+
+            // Spawn command
+            let mut child = command.spawn()?;
+
+            // Spawn threads that print output
+            let color = COLORS[color_i].to_owned();
+            let stdout = BufReader::new(child.stdout.take().expect("Cannot take stdout"));
+            let name_clone = name.to_owned();
+            thread::spawn(move || {
+                stdout.lines().for_each( |line| {
+                    println!("{}: {}", name_clone.color(color.clone()), line.unwrap());
+                });
+            });
+
+            let stderr = BufReader::new(child.stderr.take().expect("Cannot take stdout"));
+            let name_clone = name.to_owned();
+            let color = COLORS[color_i].to_owned();
+            thread::spawn(move || {
+                stderr.lines().for_each( |line| {
+                    println!("{}: {}", name_clone.color(color.clone()), line.unwrap());
+                });
+            });
+
+            // Add to running processes
+            self.running_processes.push(child);
+
+            if color_i == COLORS.len() - 1 {
+                color_i = 0;
+            } else {
+                color_i += 1;
+            }
         }
         Ok(())
     }
