@@ -38,7 +38,7 @@ pub fn spawn(
         None => ()
     }
 
-    // Set environment vars if specified
+    // Set env vars if specified
     match config.env {
         Some(ref env) => {
             for (key, var) in env.iter() {
