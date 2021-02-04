@@ -1,4 +1,6 @@
-paths_to_watch = ["code"]
+paths_to_watch = [
+  "code"
+]
 
 [processes]
 
@@ -13,4 +15,8 @@ command = "./process2.sh"
 
 [triggers.trigger]
 command = "sh"
-args = ["trigger.sh"]
+args = ["../trigger.sh"]
+working_dir = "code"
+
+[triggers.trigger.env]
+content_for_file = "Triggered"

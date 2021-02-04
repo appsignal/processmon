@@ -12,7 +12,9 @@ use crate::Result;
 #[derive(Debug,Clone,Deserialize)]
 pub struct CommandConfig {
     pub command: String,
-    pub args: Option<Vec<String>>
+    pub args: Option<Vec<String>>,
+    pub working_dir: Option<String>,
+    pub env: Option<HashMap<String,String>>
 }
 
 impl fmt::Display for CommandConfig {

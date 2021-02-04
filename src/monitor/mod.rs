@@ -1,16 +1,15 @@
-use std::io::{BufRead,BufReader};
+use std::collections::HashMap;
 use std::path::Path;
-use std::process::{Command,Child,Stdio};
+use std::process::Child;
 use std::sync::mpsc::Receiver;
-use std::thread;
 use std::time::{Duration,SystemTime};
-
-use colored::*;
 
 use crate::config::Config;
 use crate::Result;
 
 pub mod event_proxy;
+mod process;
+
 use event_proxy::ChangeEvent;
 
 const COLORS: &[&str] = &["bright green", "bright blue", "yellow", "magenta", "bright cyan"];
@@ -70,45 +69,21 @@ impl Monitor {
 
     fn spawn_processes(&mut self) -> Result<()> {
         let mut color_i = 0;
-        for (name, process) in self.config.processes.iter() {
-            println!("Starting process {} '{}'", name, process);
+        for (name, command_config) in self.config.processes.iter() {
+            println!("Starting process {} '{}'", name, command_config);
 
-            // Create command
-            let mut command = Command::new(&process.command);
-            command.stderr(Stdio::piped());
-            command.stdout(Stdio::piped());
-            match process.args {
-                Some(ref args) => {
-                    command.args(args);
-                },
-                None => ()
-            }
-
-            // Spawn command
-            let mut child = command.spawn()?;
-
-            // Spawn threads that print output
-            let color = COLORS[color_i].to_owned();
-            let stdout = BufReader::new(child.stdout.take().expect("Cannot take stdout"));
-            let name_clone = name.to_owned();
-            thread::spawn(move || {
-                stdout.lines().for_each( |line| {
-                    println!("{}: {}", name_clone.color(color.clone()), line.unwrap());
-                });
-            });
-
-            let stderr = BufReader::new(child.stderr.take().expect("Cannot take stdout"));
-            let name_clone = name.to_owned();
-            let color = COLORS[color_i].to_owned();
-            thread::spawn(move || {
-                stderr.lines().for_each( |line| {
-                    println!("{}: {}", name_clone.color(color.clone()), line.unwrap());
-                });
-            });
+            // Spawn child process
+            let child = process::spawn(
+                &name,
+                COLORS[color_i],
+                command_config,
+                None
+            )?;
 
             // Add to running processes
             self.running_processes.push(child);
 
+            // Determine next color
             if color_i == COLORS.len() - 1 {
                 color_i = 0;
             } else {
@@ -121,17 +96,23 @@ impl Monitor {
     fn run_triggers(&self, path: &Path) -> Result<()> {
         match self.config.triggers {
             Some(ref triggers) => {
-                for (name, trigger) in triggers.iter() {
-                    println!("Running trigger {} '{}'", name, trigger);
-                    let mut command = Command::new(&trigger.command);
-                    match trigger.args {
-                        Some(ref args) => {
-                            command.args(args);
-                        },
-                        None => ()
-                    }
-                    command.env("TRIGGER_PATH", path.to_string_lossy().to_string());
-                    command.status()?;
+                // Prepare env
+                let mut env = HashMap::new();
+                env.insert("TRIGGER_PATH".to_owned(), path.to_string_lossy().to_string());
+
+                for (name, command_config) in triggers.iter() {
+                    println!("Running trigger {} '{}'", name, command_config);
+
+                    // Spawn child process
+                    let mut child = process::spawn(
+                        &name,
+                        "green",
+                        command_config,
+                        Some(env.clone())
+                    )?;
+
+                    // Wait for it to finish
+                    child.wait()?;
                 }
             },
             None => ()
