@@ -28,11 +28,19 @@ cargo install processmon
 Processmon is configured by a toml file:
 
 ```
-command = "./command.sh"
+paths_to_watch = ["code"]
 
-paths_to_watch = ["code", "dependency_code"]
+[processes]
 
-triggers = ["./trigger.sh"]
+[processes.process1]
+command = "sh"
+args = ["process1.sh"]
+
+[triggers]
+
+[triggers.trigger]
+command = "sh"
+args = ["trigger.sh"]
 ```
 
 `command` sets the command to run. Place one or more paths to watch
