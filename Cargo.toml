@@ -1,6 +1,6 @@
 [package]
 name = "processmon"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Thijs Cadier <thijs@appsignal.com>"]
 license = "MIT"
 description = "Process monitor that can run trigger scripts and subsequently restarts the process when files on specified paths are modified."
