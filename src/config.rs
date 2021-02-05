@@ -11,9 +11,13 @@ use crate::Result;
 
 #[derive(Debug,Clone,Deserialize)]
 pub struct CommandConfig {
+    /// Command to run
     pub command: String,
+    /// Arguments to supply to the command
     pub args: Option<Vec<String>>,
+    /// Working directory that the command will run in
     pub working_dir: Option<String>,
+    /// Environment variables for command
     pub env: Option<HashMap<String,String>>
 }
 
@@ -28,8 +32,11 @@ impl fmt::Display for CommandConfig {
 
 #[derive(Debug,Clone,Deserialize)]
 pub struct Config {
+    /// Paths that will be watched
     pub paths_to_watch: Vec<String>,
+    /// Proceses to run and monitor
     pub processes: HashMap<String, CommandConfig>,
+    /// Triggers that will run when changes are detected on the paths
     pub triggers: Option<HashMap<String, CommandConfig>>
 }
 
