@@ -50,7 +50,7 @@ impl Monitor {
             };
 
             if restart {
-                println!("Restarting");
+                println!("Restarting ({} changed)", event.path.to_string_lossy());
                 self.kill_running_processes()?;
                 self.run_triggers(event.path.as_path())?;
                 self.spawn_processes()?;
