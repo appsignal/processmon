@@ -8,6 +8,7 @@ use crate::config::Config;
 use crate::Result;
 
 pub mod event_proxy;
+mod ignore;
 mod process;
 
 use event_proxy::ChangeEvent;
@@ -15,16 +16,19 @@ use event_proxy::ChangeEvent;
 const COLORS: &[&str] = &["bright green", "bright blue", "yellow", "magenta", "bright cyan"];
 
 pub struct Monitor {
-    pub config: Config,
-    pub receiver: Receiver<ChangeEvent>,
-    pub running_processes: Vec<Child>,
-    pub last_restart_at: Option<SystemTime>
+    config: Config,
+    receiver: Receiver<ChangeEvent>,
+    running_processes: Vec<Child>,
+    last_restart_at: Option<SystemTime>,
+    ignore: ignore::Ignore
 }
 
 impl Monitor {
     pub fn new(config: Config, receiver: Receiver<ChangeEvent>) -> Self {
+        let ignore = ignore::Ignore::new(&config);
         Self {
             config: config,
+            ignore: ignore,
             receiver: receiver,
             running_processes: Vec::new(),
             last_restart_at: None
@@ -38,6 +42,11 @@ impl Monitor {
         // Listen for change events
         loop {
             let event = self.receiver.recv()?;
+
+            // See if this is an ignored path
+            if self.ignore.should_ignore(&event.path) {
+                continue
+            }
 
             // See if we want to restart, only process events that were triggered
             // a bit later than the last restart.

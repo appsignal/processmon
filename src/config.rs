@@ -10,6 +10,14 @@ use toml;
 use crate::Result;
 
 #[derive(Debug,Clone,Deserialize)]
+pub struct PathConfig {
+    /// Path that will be watched
+    pub path: String,
+    /// Sub-paths within the path to ignore
+    pub ignore: Option<Vec<String>>
+}
+
+#[derive(Debug,Clone,Deserialize)]
 pub struct CommandConfig {
     /// Command to run
     pub command: String,
@@ -33,7 +41,7 @@ impl fmt::Display for CommandConfig {
 #[derive(Debug,Clone,Deserialize)]
 pub struct Config {
     /// Paths that will be watched
-    pub paths_to_watch: Vec<String>,
+    pub paths_to_watch: Vec<PathConfig>,
     /// Proceses to run and monitor
     pub processes: HashMap<String, CommandConfig>,
     /// Triggers that will run when changes are detected on the paths

@@ -45,10 +45,10 @@ fn main() {
     // Start watching paths
     let (watcher_sender, watcher_receiver) = channel();
     let mut watcher = watcher(watcher_sender, Duration::from_secs(1)).unwrap();
-    for path in config.paths_to_watch.iter() {
-        match watcher.watch(path, RecursiveMode::Recursive) {
+    for path_config in config.paths_to_watch.iter() {
+        match watcher.watch(&path_config.path, RecursiveMode::Recursive) {
             Ok(_) => (),
-            Err(e) => panic!("Error adding path to watch '{}': {:?}", path, e)
+            Err(e) => panic!("Error adding path to watch '{}': {:?}", path_config.path, e)
         }
     }
 
