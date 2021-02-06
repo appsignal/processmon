@@ -28,11 +28,9 @@ cargo install processmon
 Processmon is configured by a toml file:
 
 ```
-paths_to_watch = [
-  "code"
-]
-
-[processes]
+[[paths_to_watch]]
+path = "code"
+ignore = ["tmp"]
 
 [processes.process1]
 command = "sh"
@@ -40,8 +38,6 @@ args = ["process1.sh"]
 
 [processes.process2]
 command = "./process2.sh"
-
-[triggers]
 
 [triggers.trigger]
 command = "sh"
@@ -55,7 +51,8 @@ content_for_file = "Triggered"
 ### Paths to watch
 
 Place one or more paths to watch in `paths_to_watch`. Any changes here
-will restart monitored processes and run any configured triggers.
+will restart monitored processes and run any configured triggers. You
+can optionally add sub-paths to ignore.
 
 ### Processes
 

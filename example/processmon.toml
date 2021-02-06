@@ -1,8 +1,6 @@
-paths_to_watch = [
-  "code"
-]
-
-[processes]
+[[paths_to_watch]]
+path = "code"
+ignore = ["tmp"]
 
 [processes.process1]
 command = "sh"
@@ -10,8 +8,6 @@ args = ["process1.sh"]
 
 [processes.process2]
 command = "./process2.sh"
-
-[triggers]
 
 [triggers.trigger]
 command = "sh"

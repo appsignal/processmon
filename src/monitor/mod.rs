@@ -8,6 +8,7 @@ use crate::config::Config;
 use crate::Result;
 
 pub mod event_proxy;
+mod ignore;
 mod process;
 
 use event_proxy::ChangeEvent;
@@ -38,6 +39,9 @@ impl Monitor {
         // Listen for change events
         loop {
             let event = self.receiver.recv()?;
+
+            // See if this is an ignored path
+
 
             // See if we want to restart, only process events that were triggered
             // a bit later than the last restart.
