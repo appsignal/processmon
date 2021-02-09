@@ -45,7 +45,9 @@ pub struct Config {
     /// Proceses to run and monitor
     pub processes: HashMap<String, CommandConfig>,
     /// Triggers that will run when changes are detected on the paths
-    pub triggers: Option<HashMap<String, CommandConfig>>
+    pub triggers: Option<HashMap<String, CommandConfig>>,
+    /// Enable to get more detailed output
+    pub debug_mode: Option<bool>
 }
 
 impl Config {
@@ -54,6 +56,10 @@ impl Config {
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)?;
         Ok(toml::de::from_slice(&buffer)?)
+    }
+
+    pub fn in_debug_mode(&self) -> bool {
+        self.debug_mode.unwrap_or(false)
     }
 }
 

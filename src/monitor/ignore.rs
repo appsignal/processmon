@@ -98,7 +98,8 @@ mod tests {
             Config {
                 paths_to_watch: paths_to_watch,
                 processes: HashMap::new(),
-                triggers: None
+                triggers: None,
+                debug_mode: None
             }
         }
     }

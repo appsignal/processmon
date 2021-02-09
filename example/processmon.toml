@@ -1,6 +1,11 @@
+debug_mode = true
+
 [[paths_to_watch]]
 path = "code"
 ignore = ["tmp"]
+
+[[paths_to_watch]]
+path = "dependency"
 
 [processes.process1]
 command = "sh"

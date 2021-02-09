@@ -45,6 +45,9 @@ impl Monitor {
 
             // See if this is an ignored path
             if self.ignore.should_ignore(&event.path) {
+                if self.config.in_debug_mode() {
+                    println!("Ignoring changed path {}", event.path.to_string_lossy());
+                }
                 continue
             }
 
@@ -69,6 +72,9 @@ impl Monitor {
     }
 
     fn kill_running_processes(&mut self) -> Result<()> {
+        if self.config.in_debug_mode() {
+            println!("Killing {} running process(es)", self.running_processes.len());
+        }
         for mut child in self.running_processes.drain(0..) {
             child.kill()?;
             child.wait()?;
@@ -79,7 +85,9 @@ impl Monitor {
     fn spawn_processes(&mut self) -> Result<()> {
         let mut color_i = 0;
         for (name, command_config) in self.config.processes.iter() {
-            println!("Starting process {} '{}'", name, command_config);
+            if self.config.in_debug_mode() {
+                println!("Starting process {} '{}'", name, command_config);
+            }
 
             // Spawn child process
             let child = process::spawn(
@@ -110,7 +118,9 @@ impl Monitor {
                 env.insert("TRIGGER_PATH".to_owned(), path.to_string_lossy().to_string());
 
                 for (name, command_config) in triggers.iter() {
-                    println!("Running trigger {} '{}'", name, command_config);
+                    if self.config.in_debug_mode() {
+                        println!("Running trigger {} '{}'", name, command_config);
+                    }
 
                     // Spawn child process
                     let mut child = process::spawn(
@@ -124,6 +134,7 @@ impl Monitor {
                     child.wait()?;
                 }
             },
+            None if self.config.in_debug_mode() => println!("No triggers configured"),
             None => ()
         }
         Ok(())
