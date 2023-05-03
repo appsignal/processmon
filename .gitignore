@@ -1,3 +1,4 @@
 /target
 Cargo.lock
 example/code/triggered.txt
+example/triggered.txt
