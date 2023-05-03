@@ -4,11 +4,10 @@ extern crate toml;
 use std::env;
 use std::path::Path;
 use std::process::exit;
-use std::sync::mpsc::channel;
-use std::time::Duration;
+use std::sync::mpsc::{channel, Receiver, Sender};
 
 use colored::Colorize;
-use notify::{watcher, RecursiveMode, Watcher};
+use notify::{Event, RecursiveMode, Watcher};
 
 mod config;
 mod monitor;
@@ -39,10 +38,18 @@ fn main() {
     println!("Starting {} {}", "processmon".bold(), VERSION);
 
     // Start watching paths
-    let (watcher_sender, watcher_receiver) = channel();
-    let mut watcher = watcher(watcher_sender, Duration::from_secs(1)).unwrap();
+    let (watcher_sender, watcher_receiver): (Sender<Event>, Receiver<Event>) = channel();
+    let mut watcher = notify::recommended_watcher(move |res| match res {
+        Ok(event) => {
+            watcher_sender
+                .send(event)
+                .expect("Cannot send event to channel");
+        }
+        Err(e) => panic!("Watcher error: {:?}", e),
+    })
+    .expect("Cannot create watcher");
     for path_config in config.paths_to_watch.iter() {
-        match watcher.watch(&path_config.path, RecursiveMode::Recursive) {
+        match watcher.watch(Path::new(&path_config.path), RecursiveMode::Recursive) {
             Ok(_) => (),
             Err(e) => panic!("Error adding path to watch '{}': {:?}", path_config.path, e),
         }

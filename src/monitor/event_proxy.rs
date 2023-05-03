@@ -3,7 +3,7 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::time::SystemTime;
 
-use notify::DebouncedEvent;
+use notify::{Event, EventKind};
 
 pub struct ChangeEvent {
     pub path: PathBuf,
@@ -21,7 +21,7 @@ impl ChangeEvent {
 
 /// Run a proxy that listens to debounced events
 /// and converts them to change events.
-pub fn run(receiver: Receiver<DebouncedEvent>, sender: Sender<ChangeEvent>) {
+pub fn run(receiver: Receiver<Event>, sender: Sender<ChangeEvent>) {
     thread::spawn(move || loop {
         match receiver.recv() {
             Ok(event) => match convert(event) {
@@ -38,21 +38,19 @@ pub fn run(receiver: Receiver<DebouncedEvent>, sender: Sender<ChangeEvent>) {
 
 /// Convert to change event, return none if this one should
 /// be ignored.
-fn convert(event: DebouncedEvent) -> Option<ChangeEvent> {
-    // Extract path
-    let path = match event {
-        DebouncedEvent::Create(p) => p,
-        DebouncedEvent::Write(p) => p,
-        DebouncedEvent::Chmod(p) => p,
-        DebouncedEvent::Remove(p) => p,
-        DebouncedEvent::Rename(_, p) => p,
-        _ => return None,
-    };
+fn convert(mut event: Event) -> Option<ChangeEvent> {
+    // Return none if this is not a modification
+    match event.kind {
+        EventKind::Access(_) => return None,
+        EventKind::Any => return None,
+        EventKind::Other => return None,
+        _ => (),
+    }
 
-    // Only return it if the path exists
-    if path.exists() {
-        Some(ChangeEvent::new(path))
-    } else {
-        None
+    // Return an event for the first path
+    match event.paths.pop() {
+        Some(path) if path.exists() => Some(ChangeEvent::new(path)),
+        Some(_) => None,
+        None => None,
     }
 }
