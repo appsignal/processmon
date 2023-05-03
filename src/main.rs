@@ -4,11 +4,12 @@ extern crate toml;
 use std::env;
 use std::path::Path;
 use std::process::exit;
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::channel;
 
 use colored::Colorize;
-use notify::{Event, RecursiveMode, Watcher};
+use notify::{RecursiveMode, Watcher};
 
+mod change_event;
 mod config;
 mod monitor;
 
@@ -38,13 +39,16 @@ fn main() {
     println!("Starting {} {}", "processmon".bold(), VERSION);
 
     // Start watching paths
-    let (watcher_sender, watcher_receiver): (Sender<Event>, Receiver<Event>) = channel();
+    let (monitor_sender, monitor_receiver) = channel();
     let mut watcher = notify::recommended_watcher(move |res| match res {
-        Ok(event) => {
-            watcher_sender
-                .send(event)
-                .expect("Cannot send event to channel");
-        }
+        Ok(event) => match change_event::ChangeEvent::new(event) {
+            Some(event) => {
+                monitor_sender
+                    .send(event)
+                    .expect("Cannot send event to channel");
+            }
+            None => (),
+        },
         Err(e) => panic!("Watcher error: {:?}", e),
     })
     .expect("Cannot create watcher");
@@ -55,12 +59,8 @@ fn main() {
         }
     }
 
-    // Run event conversion proxy
-    let (proxy_sender, proxy_receiver) = channel();
-    monitor::event_proxy::run(watcher_receiver, proxy_sender);
-
     // Create and run monitor instance
-    let mut monitor = monitor::Monitor::new(config, proxy_receiver);
+    let mut monitor = monitor::Monitor::new(config, monitor_receiver);
     match monitor.run() {
         Ok(_) => (),
         Err(e) => panic!("Error running monitor: {:?}", e),

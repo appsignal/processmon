@@ -4,14 +4,12 @@ use std::process::Child;
 use std::sync::mpsc::Receiver;
 use std::time::{Duration, SystemTime};
 
+use crate::change_event::ChangeEvent;
 use crate::config::Config;
 use crate::Result;
 
-pub mod event_proxy;
 mod ignore;
 mod process;
-
-use event_proxy::ChangeEvent;
 
 const COLORS: &[&str] = &[
     "bright green",
