@@ -47,6 +47,17 @@ impl Monitor {
         loop {
             let event = self.receiver.recv()?;
 
+            // See if we want to do anything at all, only process events that were triggered
+            // a bit later than the last restart.
+            match self.last_restart_at {
+                Some(last_restart_at) => match event.time.duration_since(last_restart_at) {
+                    Ok(time) if time > Duration::from_secs(2) => (),
+                    Ok(_) => continue,
+                    Err(_) => continue,
+                },
+                None => (),
+            };
+
             // See if this is an ignored path
             if self.ignore.should_ignore(&event.path) {
                 if self.config.in_debug_mode() {
@@ -55,23 +66,11 @@ impl Monitor {
                 continue;
             }
 
-            // See if we want to restart, only process events that were triggered
-            // a bit later than the last restart.
-            let restart = match self.last_restart_at {
-                Some(last_restart_at) => match event.time.duration_since(last_restart_at) {
-                    Ok(time) => time > Duration::from_secs(2),
-                    Err(_) => false,
-                },
-                None => true,
-            };
-
-            if restart {
-                println!("Restarting ({} changed)", event.path.to_string_lossy());
-                self.kill_running_processes()?;
-                self.run_triggers(event.path.as_path())?;
-                self.spawn_processes()?;
-                self.last_restart_at = Some(SystemTime::now());
-            }
+            println!("Restarting ({} changed)", event.path.to_string_lossy());
+            self.kill_running_processes()?;
+            self.run_triggers(event.path.as_path())?;
+            self.spawn_processes()?;
+            self.last_restart_at = Some(SystemTime::now());
         }
     }
 
