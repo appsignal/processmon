@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::process::Child;
 use std::sync::mpsc::Receiver;
-use std::time::{Duration,SystemTime};
+use std::time::{Duration, SystemTime};
 
 use crate::config::Config;
 use crate::Result;
@@ -13,14 +13,20 @@ mod process;
 
 use event_proxy::ChangeEvent;
 
-const COLORS: &[&str] = &["bright green", "bright blue", "yellow", "magenta", "bright cyan"];
+const COLORS: &[&str] = &[
+    "bright green",
+    "bright blue",
+    "yellow",
+    "magenta",
+    "bright cyan",
+];
 
 pub struct Monitor {
     config: Config,
     receiver: Receiver<ChangeEvent>,
     running_processes: Vec<Child>,
     last_restart_at: Option<SystemTime>,
-    ignore: ignore::Ignore
+    ignore: ignore::Ignore,
 }
 
 impl Monitor {
@@ -31,7 +37,7 @@ impl Monitor {
             ignore: ignore,
             receiver: receiver,
             running_processes: Vec::new(),
-            last_restart_at: None
+            last_restart_at: None,
         }
     }
 
@@ -48,7 +54,7 @@ impl Monitor {
                 if self.config.in_debug_mode() {
                     println!("Ignoring changed path {}", event.path.to_string_lossy());
                 }
-                continue
+                continue;
             }
 
             // See if we want to restart, only process events that were triggered
@@ -58,7 +64,7 @@ impl Monitor {
                     Ok(time) => time > Duration::from_secs(2),
                     Err(_) => false,
                 },
-                None => true
+                None => true,
             };
 
             if restart {
@@ -73,7 +79,10 @@ impl Monitor {
 
     fn kill_running_processes(&mut self) -> Result<()> {
         if self.config.in_debug_mode() {
-            println!("Killing {} running process(es)", self.running_processes.len());
+            println!(
+                "Killing {} running process(es)",
+                self.running_processes.len()
+            );
         }
         for mut child in self.running_processes.drain(0..) {
             child.kill()?;
@@ -90,12 +99,7 @@ impl Monitor {
             }
 
             // Spawn child process
-            let child = process::spawn(
-                &name,
-                COLORS[color_i],
-                command_config,
-                None
-            )?;
+            let child = process::spawn(&name, COLORS[color_i], command_config, None)?;
 
             // Add to running processes
             self.running_processes.push(child);
@@ -115,7 +119,10 @@ impl Monitor {
             Some(ref triggers) => {
                 // Prepare env
                 let mut env = HashMap::new();
-                env.insert("TRIGGER_PATH".to_owned(), path.to_string_lossy().to_string());
+                env.insert(
+                    "TRIGGER_PATH".to_owned(),
+                    path.to_string_lossy().to_string(),
+                );
 
                 for (name, command_config) in triggers.iter() {
                     if self.config.in_debug_mode() {
@@ -123,19 +130,15 @@ impl Monitor {
                     }
 
                     // Spawn child process
-                    let mut child = process::spawn(
-                        &name,
-                        "green",
-                        command_config,
-                        Some(env.clone())
-                    )?;
+                    let mut child =
+                        process::spawn(&name, "green", command_config, Some(env.clone()))?;
 
                     // Wait for it to finish
                     child.wait()?;
                 }
-            },
+            }
             None if self.config.in_debug_mode() => println!("No triggers configured"),
-            None => ()
+            None => (),
         }
         Ok(())
     }

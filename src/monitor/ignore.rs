@@ -1,10 +1,10 @@
 use std::env;
-use std::path::{Path,PathBuf};
+use std::path::{Path, PathBuf};
 
 use crate::config::Config;
 
 pub struct Ignore {
-    paths: Vec<PathBuf>
+    paths: Vec<PathBuf>,
 }
 
 impl Ignore {
@@ -29,20 +29,18 @@ impl Ignore {
                         let combined_path = path.join(ignore_path).to_path_buf();
                         paths.push(combined_path);
                     }
-                },
-                None => ()
+                }
+                None => (),
             }
         }
 
-        Self {
-            paths: paths
-        }
+        Self { paths: paths }
     }
 
     pub fn should_ignore(&self, path: &Path) -> bool {
         for ignore_path in self.paths.iter() {
             if path.starts_with(ignore_path) {
-                return true
+                return true;
             }
         }
         false
@@ -51,8 +49,8 @@ impl Ignore {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
     use super::*;
+    use std::collections::HashMap;
 
     #[test]
     fn test_ignore_with_root_path() {
@@ -89,17 +87,15 @@ mod tests {
         use crate::config::PathConfig;
 
         pub fn mock_config(path: &str, ignore: &str) -> Config {
-            let paths_to_watch = vec![
-                PathConfig {
-                    path: path.to_owned(),
-                    ignore: Some(vec![ignore.to_owned()])
-                }
-            ];
+            let paths_to_watch = vec![PathConfig {
+                path: path.to_owned(),
+                ignore: Some(vec![ignore.to_owned()]),
+            }];
             Config {
                 paths_to_watch: paths_to_watch,
                 processes: HashMap::new(),
                 triggers: None,
-                debug_mode: None
+                debug_mode: None,
             }
         }
     }

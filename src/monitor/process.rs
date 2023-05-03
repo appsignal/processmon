@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use std::io::{BufRead,BufReader};
-use std::process::{Command,Child,Stdio};
+use std::io::{BufRead, BufReader};
+use std::process::{Child, Command, Stdio};
 use std::thread;
 
 use colored::*;
@@ -12,7 +12,7 @@ pub fn spawn(
     prefix: &str,
     color: &str,
     config: &CommandConfig,
-    env: Option<HashMap<String,String>>
+    env: Option<HashMap<String, String>>,
 ) -> Result<Child> {
     // Create command
     let mut command = Command::new(&config.command);
@@ -26,16 +26,16 @@ pub fn spawn(
     match config.args {
         Some(ref args) => {
             command.args(args);
-        },
-        None => ()
+        }
+        None => (),
     }
 
     // Set working dir if specified
     match config.working_dir {
         Some(ref working_dir) => {
             command.current_dir(working_dir);
-        },
-        None => ()
+        }
+        None => (),
     }
 
     // Set env vars if specified
@@ -44,16 +44,16 @@ pub fn spawn(
             for (key, var) in env.iter() {
                 command.env(key.to_uppercase(), &var);
             }
-        },
-        None => ()
+        }
+        None => (),
     }
 
     // Set additional env vars if supplied
     match env {
         Some(ref env) => {
             command.envs(env);
-        },
-        None => ()
+        }
+        None => (),
     }
 
     // Spawn command
@@ -64,8 +64,12 @@ pub fn spawn(
     let color_clone = color.to_owned();
     let prefix_clone = prefix.to_owned();
     thread::spawn(move || {
-        stdout.lines().for_each( |line| {
-            println!("{}: {}", prefix_clone.color(color_clone.clone()), line.unwrap());
+        stdout.lines().for_each(|line| {
+            println!(
+                "{}: {}",
+                prefix_clone.color(color_clone.clone()),
+                line.unwrap()
+            );
         });
     });
 
@@ -73,8 +77,12 @@ pub fn spawn(
     let color_clone = color.to_owned();
     let prefix_clone = prefix.to_owned();
     thread::spawn(move || {
-        stderr.lines().for_each( |line| {
-            println!("{}: {}", prefix_clone.color(color_clone.clone()), line.unwrap());
+        stderr.lines().for_each(|line| {
+            println!(
+                "{}: {}",
+                prefix_clone.color(color_clone.clone()),
+                line.unwrap()
+            );
         });
     });
 

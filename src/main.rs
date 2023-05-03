@@ -8,7 +8,7 @@ use std::sync::mpsc::channel;
 use std::time::Duration;
 
 use colored::Colorize;
-use notify::{Watcher,RecursiveMode,watcher};
+use notify::{watcher, RecursiveMode, Watcher};
 
 mod config;
 mod monitor;
@@ -36,11 +36,7 @@ fn main() {
         }
     };
 
-    println!(
-        "Starting {} {}",
-        "processmon".bold(),
-        VERSION
-    );
+    println!("Starting {} {}", "processmon".bold(), VERSION);
 
     // Start watching paths
     let (watcher_sender, watcher_receiver) = channel();
@@ -48,7 +44,7 @@ fn main() {
     for path_config in config.paths_to_watch.iter() {
         match watcher.watch(&path_config.path, RecursiveMode::Recursive) {
             Ok(_) => (),
-            Err(e) => panic!("Error adding path to watch '{}': {:?}", path_config.path, e)
+            Err(e) => panic!("Error adding path to watch '{}': {:?}", path_config.path, e),
         }
     }
 
@@ -60,6 +56,6 @@ fn main() {
     let mut monitor = monitor::Monitor::new(config, proxy_receiver);
     match monitor.run() {
         Ok(_) => (),
-        Err(e) => panic!("Error running monitor: {:?}", e)
+        Err(e) => panic!("Error running monitor: {:?}", e),
     }
 }
