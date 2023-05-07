@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
+use std::net::UdpSocket;
 use std::process::{Child, Command, Stdio};
 use std::thread;
 
@@ -13,12 +14,14 @@ pub fn spawn(
     color: &str,
     config: &CommandConfig,
     env: Option<HashMap<String, String>>,
+    port: Option<i32>,
 ) -> Result<Child> {
     // Create command
     let mut command = Command::new(&config.command);
 
-    // Pipe stdout and err so we can capture it and
-    // print it with a prefix.
+    // Pipe std in, out and err so we can capture it
+    // and print/write to it
+    command.stdin(Stdio::piped());
     command.stderr(Stdio::piped());
     command.stdout(Stdio::piped());
 
@@ -56,8 +59,36 @@ pub fn spawn(
         None => (),
     }
 
+    // Create udp socket to be able to connect from the outside
+    let socket = match port {
+        Some(port) => Some(UdpSocket::bind(format!("127.0.0.1:{}", port))?),
+        None => None,
+    };
+
     // Spawn command
     let mut child = command.spawn()?;
+
+    // Spawn thread to read from udp socket if we have one
+    match socket {
+        Some(socket) => {
+            let mut stdin = child.stdin.take().expect("Cannot not take stdin");
+            thread::spawn(move || loop {
+                let mut buffer = [0; 65_536];
+                match socket.recv_from(&mut buffer) {
+                    Ok((bytes_read, source)) => {
+                        // Write the read bytes to the proceses stdin
+                        stdin.write(&buffer[0..bytes_read]).unwrap();
+                    }
+                    // TODO: store source to write to later
+                    Err(err) => {
+                        eprintln!("Error reading from socket: {}", err);
+                        continue;
+                    }
+                };
+            });
+        }
+        None => (),
+    }
 
     // Spawn threads that print stdout and stderr
     let stdout = BufReader::new(child.stdout.take().expect("Cannot take stdout"));
@@ -73,16 +104,26 @@ pub fn spawn(
         });
     });
 
-    let stderr = BufReader::new(child.stderr.take().expect("Cannot take stdout"));
+    let stderr = BufReader::new(child.stderr.take().expect("Cannot take stderr"));
     let color_clone = color.to_owned();
     let prefix_clone = prefix.to_owned();
     thread::spawn(move || {
         stderr.lines().for_each(|line| {
+            let line = line.expect("Could not read line from process stdout");
+            // Print to our stdout
             println!(
-                "{}: {}",
+                "{} stderr: {}",
                 prefix_clone.color(color_clone.clone()),
-                line.unwrap()
+                line
             );
+            // Emit on UDP socket if present
+            //match socket {
+            //    Some(ref socket) => match socket.write(line.as_bytes()) {
+            //        Ok(_) => (),
+            //        Err(err) => eprintln!("Error writing to socket: {}", err),
+            //    },
+            //    None => ()
+            //}
         });
     });
 

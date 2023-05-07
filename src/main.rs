@@ -17,25 +17,40 @@ use anyhow::Result;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
+enum Command {
+    Start,
+    Connect,
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    // Load config
-    let config_file_path = match args.get(1) {
-        Some(p) => p.to_owned(),
-        None => {
-            println!("Please specify a config file to use");
-            exit(1);
-        }
-    };
-    let config = match config::Config::from_file(Path::new(&config_file_path)) {
-        Ok(c) => c,
-        Err(e) => {
-            println!("Cannot load config from {}: {:?}", config_file_path, e);
+    // See what we are doing
+    let command = match args.get(1).map(|arg| arg.as_str()) {
+        Some("start") => Command::Start,
+        Some("connect") => Command::Connect,
+        _ => {
+            eprintln!("Use start or connect as the first argument");
             exit(1);
         }
     };
 
+    // Load config
+    let config = match config::Config::from_file(Path::new("processmon.toml")) {
+        Ok(c) => c,
+        Err(e) => {
+            println!("Cannot load config from processmon.toml: {:?}", e);
+            exit(1);
+        }
+    };
+
+    match command {
+        Command::Start => start(config),
+        Command::Connect => connect(config),
+    }
+}
+
+fn start(config: config::Config) {
     println!("Starting {} {}", "processmon".bold(), VERSION);
 
     // Start watching paths
@@ -66,3 +81,5 @@ fn main() {
         Err(e) => panic!("Error running monitor: {:?}", e),
     }
 }
+
+fn connect(config: Config) {}

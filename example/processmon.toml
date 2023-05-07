@@ -14,6 +14,9 @@ args = ["process1.sh"]
 [processes.process2]
 command = "./process2.sh"
 
+[processes.process3]
+command = "./process3.sh"
+
 [triggers.trigger]
 command = "sh"
 args = ["../trigger.sh"]
