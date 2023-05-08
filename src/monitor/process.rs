@@ -72,12 +72,16 @@ pub fn spawn(
     let mut child = command.spawn()?;
 
     // Spawn thread to read from udp socket if we have one
-    match socket {
-        Some(socket) => {
+    let read_socket = match socket {
+        Some(ref socket) => Some(socket.try_clone().unwrap()),
+        None => None,
+    };
+    match read_socket {
+        Some(read_socket) => {
             let mut stdin = child.stdin.take().expect("Cannot not take stdin");
             let mut buffer = [0; 65_536];
             thread::spawn(move || loop {
-                match socket.recv_from(&mut buffer) {
+                match read_socket.recv_from(&mut buffer) {
                     Ok((bytes_read, source)) => {
                         // Write the read bytes to the proceses stdin
                         stdin.write(&buffer[0..bytes_read]).unwrap();
@@ -99,11 +103,21 @@ pub fn spawn(
     let prefix_clone = prefix.to_owned();
     thread::spawn(move || {
         stdout.lines().for_each(|line| {
+            let line = line.unwrap();
             println!(
                 "{}: {}",
                 prefix_clone.color(color_clone.clone()),
-                line.unwrap()
+                line
             );
+            match socket {
+                Some(ref socket) => {
+                    socket.send_to(
+                        line.as_bytes(),
+                        "127.0.0.1:41102"
+                    ).unwrap();
+                },
+                None => (),
+            }
         });
     });
 

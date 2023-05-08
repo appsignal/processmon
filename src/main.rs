@@ -7,6 +7,7 @@ use std::net::UdpSocket;
 use std::path::Path;
 use std::process::exit;
 use std::sync::mpsc::channel;
+use std::thread;
 
 use colored::Colorize;
 use notify::{RecursiveMode, Watcher};
@@ -111,6 +112,13 @@ fn connect(config: config::Config, args: Vec<String>) {
 
     let socket = UdpSocket::bind(format!("127.0.0.1:{}", 41_100 + process_i))
         .expect("Could not start socket");
+
+    let read_socket = socket.try_clone().unwrap();
+    let mut read_buffer = [0; 65_536];
+    thread::spawn(move || loop {
+        let (bytes_read, source) = read_socket.recv_from(&mut read_buffer).unwrap();
+        println!("{}", String::from_utf8_lossy(&read_buffer[0..bytes_read]));
+    });
 
     let mut buffer = [0; 65_536];
     let mut stdin = stdin();
