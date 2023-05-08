@@ -105,5 +105,5 @@ fn connect(config: config::Config, args: Vec<String>) {
     println!("Connecting to {} on {}", process, 40_100 + process_i);
 
     let socket = UdpSocket::bind(format!("127.0.0.1:{}", 41_100 + process_i)).expect("Could not start socket");
-    socket.send_to(b"This is some data", format!("127.0.0.1:{}", 40_100 + process_i)).expect("Failed sending");
+    socket.send_to(b"This is some data\n", format!("127.0.0.1:{}", 40_100 + process_i)).expect("Failed sending");
 }

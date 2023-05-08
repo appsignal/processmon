@@ -80,7 +80,6 @@ pub fn spawn(
                 match socket.recv_from(&mut buffer) {
                     Ok((bytes_read, source)) => {
                         // Write the read bytes to the proceses stdin
-                        println!("Received {}", String::from_utf8_lossy(&buffer[0..bytes_read]));
                         stdin.write(&buffer[0..bytes_read]).unwrap();
                     }
                     // TODO: store source to write to later

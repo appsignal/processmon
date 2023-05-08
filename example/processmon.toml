@@ -8,14 +8,13 @@ ignore = ["tmp"]
 path = "dependency"
 
 [processes.process1]
-command = "sh"
-args = ["process1.sh"]
+command = "./process1.rb"
 
 [processes.process2]
-command = "./process2.sh"
+command = "./process2.rb"
 
 [processes.process3]
-command = "./process3.sh"
+command = "./process3.rb"
 
 [triggers.trigger]
 command = "sh"
