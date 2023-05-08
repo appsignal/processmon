@@ -64,7 +64,7 @@ pub fn spawn(
         Some(port) => {
             println!("Binding to {}", port);
             Some(UdpSocket::bind(format!("127.0.0.1:{}", port))?)
-        },
+        }
         None => None,
     };
 
@@ -75,8 +75,8 @@ pub fn spawn(
     match socket {
         Some(socket) => {
             let mut stdin = child.stdin.take().expect("Cannot not take stdin");
+            let mut buffer = [0; 65_536];
             thread::spawn(move || loop {
-                let mut buffer = [0; 65_536];
                 match socket.recv_from(&mut buffer) {
                     Ok((bytes_read, source)) => {
                         // Write the read bytes to the proceses stdin

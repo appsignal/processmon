@@ -2,6 +2,7 @@ extern crate notify;
 extern crate toml;
 
 use std::env;
+use std::io::{stdin, Read};
 use std::net::UdpSocket;
 use std::path::Path;
 use std::process::exit;
@@ -88,7 +89,7 @@ fn connect(config: config::Config, args: Vec<String>) {
     let process = match args.get(2).map(|arg| arg.as_str()) {
         Some(p) => p,
         None => {
-            eprintln!("Pick a command");
+            eprintln!("Pick a process");
             exit(1);
         }
     };
@@ -102,8 +103,24 @@ fn connect(config: config::Config, args: Vec<String>) {
         }
     };
 
-    println!("Connecting to {} on {}", process, 40_100 + process_i);
+    println!(
+        "Connecting to {} on {}, type away...",
+        process,
+        40_100 + process_i
+    );
 
-    let socket = UdpSocket::bind(format!("127.0.0.1:{}", 41_100 + process_i)).expect("Could not start socket");
-    socket.send_to(b"This is some data\n", format!("127.0.0.1:{}", 40_100 + process_i)).expect("Failed sending");
+    let socket = UdpSocket::bind(format!("127.0.0.1:{}", 41_100 + process_i))
+        .expect("Could not start socket");
+
+    let mut buffer = [0; 65_536];
+    let mut stdin = stdin();
+    loop {
+        let bytes_read = stdin.read(&mut buffer[..]).unwrap();
+        socket
+            .send_to(
+                &buffer[..bytes_read],
+                format!("127.0.0.1:{}", 40_100 + process_i),
+            )
+            .expect("Failed sending");
+    }
 }
