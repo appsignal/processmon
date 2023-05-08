@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt;
 use std::fs::File;
 use std::io::Read;
@@ -26,7 +26,7 @@ pub struct CommandConfig {
     /// Working directory that the command will run in
     pub working_dir: Option<String>,
     /// Environment variables for command
-    pub env: Option<HashMap<String, String>>,
+    pub env: Option<BTreeMap<String, String>>,
 }
 
 impl fmt::Display for CommandConfig {
@@ -43,9 +43,9 @@ pub struct Config {
     /// Paths that will be watched
     pub paths_to_watch: Vec<PathConfig>,
     /// Proceses to run and monitor
-    pub processes: HashMap<String, CommandConfig>,
+    pub processes: BTreeMap<String, CommandConfig>,
     /// Triggers that will run when changes are detected on the paths
-    pub triggers: Option<HashMap<String, CommandConfig>>,
+    pub triggers: Option<BTreeMap<String, CommandConfig>>,
     /// Enable to get more detailed output
     pub debug_mode: Option<bool>,
 }

@@ -61,7 +61,10 @@ pub fn spawn(
 
     // Create udp socket to be able to connect from the outside
     let socket = match port {
-        Some(port) => Some(UdpSocket::bind(format!("127.0.0.1:{}", port))?),
+        Some(port) => {
+            println!("Binding to {}", port);
+            Some(UdpSocket::bind(format!("127.0.0.1:{}", port))?)
+        },
         None => None,
     };
 
@@ -77,6 +80,7 @@ pub fn spawn(
                 match socket.recv_from(&mut buffer) {
                     Ok((bytes_read, source)) => {
                         // Write the read bytes to the proceses stdin
+                        println!("Received {}", String::from_utf8_lossy(&buffer[0..bytes_read]));
                         stdin.write(&buffer[0..bytes_read]).unwrap();
                     }
                     // TODO: store source to write to later

@@ -2,6 +2,7 @@ extern crate notify;
 extern crate toml;
 
 use std::env;
+use std::net::UdpSocket;
 use std::path::Path;
 use std::process::exit;
 use std::sync::mpsc::channel;
@@ -46,7 +47,7 @@ fn main() {
 
     match command {
         Command::Start => start(config),
-        Command::Connect => connect(config),
+        Command::Connect => connect(config, args),
     }
 }
 
@@ -82,4 +83,27 @@ fn start(config: config::Config) {
     }
 }
 
-fn connect(config: Config) {}
+fn connect(config: config::Config, args: Vec<String>) {
+    // Get the process we are conecting to
+    let process = match args.get(2).map(|arg| arg.as_str()) {
+        Some(p) => p,
+        None => {
+            eprintln!("Pick a command");
+            exit(1);
+        }
+    };
+
+    // Get the position of the process in the config
+    let process_i = match config.processes.keys().position(|key| key == process) {
+        Some(i) => i,
+        None => {
+            eprintln!("Process {} not in config", process);
+            exit(1);
+        }
+    };
+
+    println!("Connecting to {} on {}", process, 40_100 + process_i);
+
+    let socket = UdpSocket::bind(format!("127.0.0.1:{}", 41_100 + process_i)).expect("Could not start socket");
+    socket.send_to(b"This is some data", format!("127.0.0.1:{}", 40_100 + process_i)).expect("Failed sending");
+}
