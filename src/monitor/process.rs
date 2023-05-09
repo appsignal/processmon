@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Write, Read};
 use std::net::UdpSocket;
 use std::process::{Child, Command, Stdio};
 use std::thread;
@@ -98,22 +98,38 @@ pub fn spawn(
     }
 
     // Spawn threads that print stdout and stderr
-    let stdout = BufReader::new(child.stdout.take().expect("Cannot take stdout"));
-    let color_clone = color.to_owned();
-    let prefix_clone = prefix.to_owned();
-    thread::spawn(move || {
-        stdout.lines().for_each(|line| {
-            let line = line.unwrap();
-            println!("{}: {}", prefix_clone.color(color_clone.clone()), line);
-            match socket {
-                Some(ref socket) => {
-                    socket
-                        .send_to(line.as_bytes(), address.as_ref().unwrap())
-                        .unwrap();
-                }
-                None => (),
+    //let stdout = BufReader::new(child.stdout.take().expect("Cannot take stdout"));
+    //let color_clone = color.to_owned();
+    //let prefix_clone = prefix.to_owned();
+    //thread::spawn(move || {
+    //    stdout.lines().for_each(|line| {
+    //        let line = line.unwrap();
+    //        println!("{}: {}", prefix_clone.color(color_clone.clone()), line);
+    //        match socket {
+    //            Some(ref socket) => {
+    //                socket
+    //                    .send_to(line.as_bytes(), address.as_ref().unwrap())
+    //                    .unwrap();
+    //            }
+    //            None => (),
+    //        }
+    //    });
+    //});
+
+    // Non-buffered read
+    let mut stdout = child.stdout.take().expect("Cannot take stdout");
+    let mut buffer = [0; 65_536];
+    thread::spawn(move || loop {
+        let bytes_read = stdout.read(&mut buffer).unwrap();
+        // TODO also print lines
+        match socket {
+            Some(ref socket) => {
+                socket
+                    .send_to(&buffer[..bytes_read], address.as_ref().unwrap())
+                    .unwrap();
             }
-        });
+            None => (),
+        }
     });
 
     let stderr = BufReader::new(child.stderr.take().expect("Cannot take stderr"));
