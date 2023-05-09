@@ -83,7 +83,7 @@ pub fn spawn(
             let mut buffer = [0; 65_536];
             thread::spawn(move || loop {
                 match read_socket.recv_from(&mut buffer) {
-                    Ok((bytes_read, source)) => {
+                    Ok((bytes_read, _source)) => {
                         // Write the read bytes to the proceses stdin
                         stdin.write(&buffer[0..bytes_read]).unwrap();
                     }

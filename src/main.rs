@@ -2,7 +2,7 @@ extern crate notify;
 extern crate toml;
 
 use std::env;
-use std::io::{stdin, Read};
+use std::io::{stdin, stdout, Read, Write};
 use std::net::UdpSocket;
 use std::path::Path;
 use std::process::exit;
@@ -120,9 +120,11 @@ fn connect(config: config::Config, args: Vec<String>) {
     // Read and print incoming data from the socket
     let read_socket = socket.try_clone().unwrap();
     let mut read_buffer = [0; 65_536];
+    let mut stdout = stdout();
     thread::spawn(move || loop {
         let (bytes_read, _source) = read_socket.recv_from(&mut read_buffer).unwrap();
-        println!("{}", String::from_utf8_lossy(&read_buffer[0..bytes_read]));
+        stdout.write_all(&read_buffer[0..bytes_read]).unwrap();
+        stdout.flush().unwrap();
     });
 
     // Send stdin to the socket
