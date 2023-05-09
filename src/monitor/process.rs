@@ -14,7 +14,6 @@ pub fn spawn(
     color: &str,
     config: &CommandConfig,
     env: Option<HashMap<String, String>>,
-    port: Option<i32>,
 ) -> Result<Child> {
     // Create command
     let mut command = Command::new(&config.command);
@@ -60,11 +59,13 @@ pub fn spawn(
     }
 
     // Create udp socket to be able to connect from the outside
-    let socket = match port {
-        Some(port) => {
-            println!("Binding to {}", port);
-            Some(UdpSocket::bind(format!("127.0.0.1:{}", port))?)
-        }
+    let socket = match config.process_port {
+        Some(port) => Some(UdpSocket::bind(format!("127.0.0.1:{}", port))?),
+        None => None,
+    };
+    // Address to write to to reach the client
+    let address = match config.connect_port {
+        Some(port) => Some(format!("127.0.0.1:{}", port)),
         None => None,
     };
 
@@ -86,7 +87,6 @@ pub fn spawn(
                         // Write the read bytes to the proceses stdin
                         stdin.write(&buffer[0..bytes_read]).unwrap();
                     }
-                    // TODO: store source to write to later
                     Err(err) => {
                         eprintln!("Error reading from socket: {}", err);
                         continue;
@@ -104,18 +104,13 @@ pub fn spawn(
     thread::spawn(move || {
         stdout.lines().for_each(|line| {
             let line = line.unwrap();
-            println!(
-                "{}: {}",
-                prefix_clone.color(color_clone.clone()),
-                line
-            );
+            println!("{}: {}", prefix_clone.color(color_clone.clone()), line);
             match socket {
                 Some(ref socket) => {
-                    socket.send_to(
-                        line.as_bytes(),
-                        "127.0.0.1:41102"
-                    ).unwrap();
-                },
+                    socket
+                        .send_to(line.as_bytes(), address.as_ref().unwrap())
+                        .unwrap();
+                }
                 None => (),
             }
         });

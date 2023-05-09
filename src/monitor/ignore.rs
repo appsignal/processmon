@@ -50,7 +50,7 @@ impl Ignore {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
 
     #[test]
     fn test_ignore_with_root_path() {
@@ -93,9 +93,10 @@ mod tests {
             }];
             Config {
                 paths_to_watch: paths_to_watch,
-                processes: HashMap::new(),
+                processes: BTreeMap::new(),
                 triggers: None,
                 debug_mode: None,
+                port_range_start: None,
             }
         }
     }

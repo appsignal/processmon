@@ -95,40 +95,44 @@ fn connect(config: config::Config, args: Vec<String>) {
         }
     };
 
-    // Get the position of the process in the config
-    let process_i = match config.processes.keys().position(|key| key == process) {
-        Some(i) => i,
+    // Get the command config for the process we are connecting to
+    let command_config = match config.processes.get(process) {
+        Some(c) => c,
         None => {
             eprintln!("Process {} not in config", process);
             exit(1);
         }
     };
 
+    // Get ports
+    let our_port = command_config.connect_port.expect("No connect port set");
+    let process_port = command_config.process_port.expect("No process port set");
+
     println!(
         "Connecting to {} on {}, type away...",
-        process,
-        40_100 + process_i
+        process, process_port
     );
 
-    let socket = UdpSocket::bind(format!("127.0.0.1:{}", 41_100 + process_i))
-        .expect("Could not start socket");
+    // Create a socket
+    let socket =
+        UdpSocket::bind(format!("127.0.0.1:{}", our_port)).expect("Could not start socket");
 
+    // Read and print incoming data from the socket
     let read_socket = socket.try_clone().unwrap();
     let mut read_buffer = [0; 65_536];
     thread::spawn(move || loop {
-        let (bytes_read, source) = read_socket.recv_from(&mut read_buffer).unwrap();
+        let (bytes_read, _source) = read_socket.recv_from(&mut read_buffer).unwrap();
         println!("{}", String::from_utf8_lossy(&read_buffer[0..bytes_read]));
     });
 
+    // Send stdin to the socket
     let mut buffer = [0; 65_536];
     let mut stdin = stdin();
+    let address = format!("127.0.0.1:{}", process_port);
     loop {
         let bytes_read = stdin.read(&mut buffer[..]).unwrap();
         socket
-            .send_to(
-                &buffer[..bytes_read],
-                format!("127.0.0.1:{}", 40_100 + process_i),
-            )
+            .send_to(&buffer[..bytes_read], &address)
             .expect("Failed sending");
     }
 }

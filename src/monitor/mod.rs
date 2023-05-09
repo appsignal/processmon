@@ -90,14 +90,13 @@ impl Monitor {
 
     fn spawn_processes(&mut self) -> Result<()> {
         let mut color_i = 0;
-        let mut port_i = 40_100;
         for (name, command_config) in self.config.processes.iter() {
             if self.config.in_debug_mode() {
                 println!("Starting process {} '{}'", name, command_config);
             }
 
             // Spawn child process
-            let child = process::spawn(&name, COLORS[color_i], command_config, None, Some(port_i))?;
+            let child = process::spawn(&name, COLORS[color_i], command_config, None)?;
 
             // Add to running processes
             self.running_processes.push(child);
@@ -108,9 +107,6 @@ impl Monitor {
             } else {
                 color_i += 1;
             }
-
-            // Next port
-            port_i += 1;
         }
         Ok(())
     }
@@ -132,7 +128,7 @@ impl Monitor {
 
                     // Spawn child process
                     let mut child =
-                        process::spawn(&name, "green", command_config, Some(env.clone()), None)?;
+                        process::spawn(&name, "green", command_config, Some(env.clone()))?;
 
                     // Wait for it to finish
                     child.wait()?;

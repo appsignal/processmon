@@ -27,6 +27,10 @@ pub struct CommandConfig {
     pub working_dir: Option<String>,
     /// Environment variables for command
     pub env: Option<BTreeMap<String, String>>,
+    /// UDP port to use on the process side
+    pub process_port: Option<i32>,
+    /// UDP port to use on the connect side
+    pub connect_port: Option<i32>,
 }
 
 impl fmt::Display for CommandConfig {
@@ -48,18 +52,35 @@ pub struct Config {
     pub triggers: Option<BTreeMap<String, CommandConfig>>,
     /// Enable to get more detailed output
     pub debug_mode: Option<bool>,
+    /// Start of the port range to use
+    pub port_range_start: Option<i32>,
 }
 
 impl Config {
     pub fn from_file(path: &Path) -> Result<Config> {
+        // Read the config file
         let mut file = File::open(path)?;
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)?;
-        Ok(toml::de::from_slice(&buffer)?)
+        let mut config: Self = toml::de::from_slice(&buffer)?;
+        // Set port config
+        let mut port = config.port_range_start();
+        for (_name, command_config) in config.processes.iter_mut() {
+            command_config.process_port = Some(port);
+            port += 1;
+            command_config.connect_port = Some(port);
+            port += 1;
+        }
+        // Return it
+        Ok(config)
     }
 
     pub fn in_debug_mode(&self) -> bool {
         self.debug_mode.unwrap_or(false)
+    }
+
+    pub fn port_range_start(&self) -> i32 {
+        self.port_range_start.unwrap_or(40_000)
     }
 }
 
@@ -79,6 +100,23 @@ mod tests {
             .expect("Could not get current dir")
             .join("example/processmon.toml");
 
-        Config::from_file(&path).expect("Cannot load config");
+        let config = Config::from_file(&path).expect("Cannot load config");
+        assert_eq!(40_000, config.port_range_start());
+
+        let mut iter = config.processes.iter();
+        let (name, command_config) = iter.next().unwrap();
+        assert_eq!("process1", name);
+        assert_eq!(Some(40_000), command_config.process_port);
+        assert_eq!(Some(40_001), command_config.connect_port);
+
+        let (name, command_config) = iter.next().unwrap();
+        assert_eq!("process2", name);
+        assert_eq!(Some(40_002), command_config.process_port);
+        assert_eq!(Some(40_003), command_config.connect_port);
+
+        let (name, command_config) = iter.next().unwrap();
+        assert_eq!("process3", name);
+        assert_eq!(Some(40_004), command_config.process_port);
+        assert_eq!(Some(40_005), command_config.connect_port);
     }
 }
