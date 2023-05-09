@@ -3,6 +3,8 @@ STDOUT.sync = true
 
 puts "Run process3 #{$$}"
 
-loop do
-  puts STDIN.gets
-end
+binding.debugger
+
+#loop do
+#  puts STDIN.gets
+#end

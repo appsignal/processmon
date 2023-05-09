@@ -128,14 +128,6 @@ pub fn spawn(
                 prefix_clone.color(color_clone.clone()),
                 line
             );
-            // Emit on UDP socket if present
-            //match socket {
-            //    Some(ref socket) => match socket.write(line.as_bytes()) {
-            //        Ok(_) => (),
-            //        Err(err) => eprintln!("Error writing to socket: {}", err),
-            //    },
-            //    None => ()
-            //}
         });
     });
 
